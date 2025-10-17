@@ -290,6 +290,12 @@ Always **sync from S3 to local disk** (e.g., `/mnt/imagenet`) and train **from l
 
 ---
 
+### Example Training Output (Tiny-ImageNet 10 epochs)
+Below is a sample terminal log showing per-epoch loss and accuracy:
+
+![Tiny-ImageNet training log](assets/training-log.png)
+
+
 ## Appendix: Example terminal session (abridged)
 ```bash
 # backup
