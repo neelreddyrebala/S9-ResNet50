@@ -1,6 +1,7 @@
-﻿# ResNet-50 on Tiny-ImageNet (From Scratch) — EC2 Quickstart
+# ResNet-50 Training on ImageNet-1k Using AWS EC2
+Train a ResNet-50 model from scratch on the ImageNet-1k (ILSVRC 2012) dataset using PyTorch and AWS EC2 GPU instance
 
-Train **ResNet-50 from scratch** on **Tiny-ImageNet (200 classes)** using PyTorch + timm. This README walks you through launching an AWS EC2 GPU instance, setting up the environment, running a **1–2 epoch demo**, and collecting logs you can share.
+But as a prerequisite, we have trained  **ResNet-50 from scratch** on **Tiny-ImageNet (200 classes)** using PyTorch + timm. This README walks you through launching an AWS EC2 GPU instance, setting up the environment, running a **1–2 epoch demo**, and collecting logs you can share.
 
 ## Contents
 - What you’ll get
@@ -264,3 +265,9 @@ tail -n 5 runs/tiny-r50/log.jsonl
 ls -lh runs/tiny-r50
 ```
 
+## Collaborators
+
+- Neelreddy Rebala <neelreddy.rebala@gmail.com>
+- Jayant Guru Shrivastava <jayantgurushrivastava@gmail.com>
+- Vikas <vikasjhanitk@gmail.com>
+- Divya Kamat <Divya.r.kamat@gmail.com>
