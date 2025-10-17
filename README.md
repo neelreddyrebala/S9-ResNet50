@@ -304,7 +304,7 @@ aws s3 sync s3://$BUCKET/tinyimagenet/runs/tiny-r50 ./runs/tiny-r50
 
 ## Next Steps: Scaling to ImageNet-1K
 - Once the pipeline is validated on Tiny-ImageNet, we follow a similar approach for ImageNet-1K.
-- Data will be read directly from Amazon S3.
+- EBS Data synced with Amazon S3, and read from there.
 - Training will be scaled for longer epochs with checkpointing and monitoring.
 
 
