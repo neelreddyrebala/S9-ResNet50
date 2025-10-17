@@ -1,9 +1,10 @@
 # scripts/reorg_tiny_val.py
-import shutil, os
+import shutil
 from pathlib import Path
+import argparse
 
-def main(root="/data/tiny-imagenet-200"):
-    root = Path(root)
+def main(root):
+    root = Path(root).expanduser()
     val_dir = root / "val"
     images_dir = val_dir / "images"
     ann_path = val_dir / "val_annotations.txt"
@@ -22,7 +23,10 @@ def main(root="/data/tiny-imagenet-200"):
 
     if images_dir.exists():
         shutil.rmtree(images_dir)
-    print("Val reorganized to class subfolders.")
+    print("Val reorganized to class subfolders at:", val_dir)
 
 if __name__ == "__main__":
-    main()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--root", required=True, help="Tiny-ImageNet root (contains train/ and val/)")
+    args = ap.parse_args()
+    main(args.root)

@@ -8,7 +8,8 @@ from torchvision import datasets, transforms
 from torchvision.transforms import autoaugment
 from timm.data import Mixup
 import timm
-from torch.cuda.amp import GradScaler, autocast
+from torch.amp import GradScaler, autocast
+from timm.loss import SoftTargetCrossEntropy
 
 
 def get_loaders(data_root, img_size=224, bs=128, workers=8):
@@ -119,7 +120,7 @@ def main():
 
     # If using Mixup/CutMix, use soft-target loss
     if mixup_fn is not None:
-        ce = timm.loss.SoftTargetCrossEntropy()
+        ce = ce = SoftTargetCrossEntropy()
     else:
         ce = nn.CrossEntropyLoss()
 
@@ -141,7 +142,7 @@ def main():
                 x, y = mixup_fn(x, y)
 
             optimizer.zero_grad(set_to_none=True)
-            with autocast(enabled=args.fp16):
+            with autocast(device_type="cuda", enabled=args.fp16):
                 logits = model(x)
                 loss = ce(logits, y)
 
