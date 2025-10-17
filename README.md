@@ -1,6 +1,7 @@
-# ResNet-50 on Tiny-ImageNet (From Scratch) — EC2 + S3 Quickstart (Updated)
+# ResNet-50 Training on ImageNet-1k Using AWS EC2
+Goal is to train a ResNet-50 model from scratch on the ImageNet-1k (ILSVRC 2012) dataset using PyTorch and AWS EC2 GPU instance, and the target is to achieve 75% top-1 accuracy
 
-Train **ResNet‑50 from scratch** on **Tiny‑ImageNet (200 classes)** using PyTorch + timm on AWS EC2. This README adds a **clean S3 workflow** (backup/restore) and a **scalable plan for ImageNet‑1k**, plus **fast I/O tips** so big dataset transfers don’t crawl.
+Before training ResNet-50 on the full ImageNet-1K dataset (which contains over 1 million training images), we first trained **ResNet-50 from scratch** on **Tiny-ImageNet (200 classes)** using PyTorch and timm. This initial step helped us validate our training pipeline. This README adds a **clean S3 workflow** (backup/restore) and a **scalable plan for ImageNet‑1k**, plus **fast I/O tips** so big dataset transfers don’t crawl.
 
 ---
 
@@ -300,3 +301,16 @@ aws s3 sync ~/data/tiny-imagenet-200 s3://$BUCKET/tinyimagenet/dataset
 aws s3 sync s3://$BUCKET/tinyimagenet/dataset ~/data/tiny-imagenet-200
 aws s3 sync s3://$BUCKET/tinyimagenet/runs/tiny-r50 ./runs/tiny-r50
 ```
+
+## Next Steps: Scaling to ImageNet-1K
+- Once the pipeline is validated on Tiny-ImageNet, we follow a similar approach for ImageNet-1K.
+- Data will be read directly from Amazon S3.
+- Training will be scaled for longer epochs with checkpointing and monitoring.
+
+
+## Collaborators
+
+- Neelreddy Rebala <neelreddy.rebala@gmail.com>
+- Jayant Guru Shrivastava <jayantgurushrivastava@gmail.com>
+- Vikas <vikasjhanitk@gmail.com>
+- Divya Kamat <Divya.r.kamat@gmail.com>
