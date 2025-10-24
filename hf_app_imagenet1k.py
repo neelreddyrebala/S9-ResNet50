@@ -71,42 +71,6 @@ preprocess = transforms.Compose([
                          std=[0.229, 0.224, 0.225])
 ])
 
-# ---------- Grad-CAM Implementation ----------
-class GradCAM:
-    def __init__(self, model, target_layer):
-        self.model = model
-        self.target_layer = target_layer
-        self.gradients = None
-        self.activations = None
-        
-        self.fwd_hook = target_layer.register_forward_hook(self._save_activation)
-        self.bwd_hook = target_layer.register_full_backward_hook(self._save_gradient)
-    
-    def _save_activation(self, module, input, output):
-        self.activations = output.detach()
-    
-    def _save_gradient(self, module, grad_input, grad_output):
-        self.gradients = grad_output[0].detach()
-    
-    def generate(self, input_tensor, target_class=None):
-        output = self.model(input_tensor)
-        
-        if target_class is None:
-            target_class = output.argmax(dim=1).item()
-        
-        self.model.zero_grad()
-        output[0, target_class].backward()
-        
-        weights = self.gradients.mean(dim=(2, 3), keepdim=True)
-        cam = (weights * self.activations).sum(dim=1).squeeze(0)
-        cam = torch.clamp(cam, min=0)
-        cam = cam / (cam.max() + 1e-8)
-        
-        return cam.cpu().numpy(), target_class
-    
-    def remove_hooks(self):
-        self.fwd_hook.remove()
-        self.bwd_hook.remove()
 
 # ---------- Visualization ----------
 def apply_colormap_on_image(org_img, activation_map, colormap=cv2.COLORMAP_JET):
@@ -167,12 +131,6 @@ custom_css = """
     text-align: center;
     margin-bottom: 2rem;
 }
-.upload-section {
-    border: 2px dashed #e0e0e0;
-    border-radius: 12px;
-    padding: 2rem;
-    background: #fafafa;
-}
 .results-panel {
     background: white;
     border-radius: 12px;
@@ -199,39 +157,28 @@ custom_css = """
 with gr.Blocks(theme=gr.themes.Soft(), css=custom_css, title="ImageNet Classifier") as demo:
     
     # Header
-    with gr.Row():
-        gr.Markdown(
-            """
-            <div class="main-header">
-            
-            # Deep Learning Image Classifier
-            ### ResNet50 Model with Gradient-weighted Class Activation Mapping (Grad-CAM)
-            
-            *Powered by PyTorch | Trained on TinyImageNet (200 Classes)*
-            
-            </div>
-            """,
-            elem_classes="main-header"
-        )
+    gr.Markdown(
+        """
+        # Deep learning image classifier
+        ### ResNet50 model with gradient-weighted class activation mapping
+        """
+    )
     
-    # Main Content
-    with gr.Row():
-        # Left Column - Input Section
-        with gr.Column(scale=1):
-            gr.Markdown("### Input Selection")
-            
-            # Tab interface for upload vs examples
-            with gr.Tabs():
-                with gr.Tab("Upload Image"):
+    with gr.Tabs():
+        # Main Classification Tab
+        with gr.Tab("Classifier"):
+            with gr.Row():
+                # Left Column - Input Section
+                with gr.Column(scale=1):
+                    gr.Markdown("### Upload image")
+                    
                     image_input = gr.Image(
                         type="pil", 
-                        label="Upload an Image",
-                        height=400,
-                        elem_classes="upload-section"
+                        label="Select an image",
+                        height=400
                     )
                     
-                with gr.Tab("Sample Images"):
-                    gr.Markdown("*Click on an image below to use it for classification*")
+                    gr.Markdown("### Example images")
                     example_images = gr.Examples(
                         examples=[
                             ["https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=400"],
@@ -242,85 +189,117 @@ with gr.Blocks(theme=gr.themes.Soft(), css=custom_css, title="ImageNet Classifie
                             ["https://images.unsplash.com/photo-1470093851219-69951fcbb533?w=400"],
                         ],
                         inputs=image_input,
-                        label="Example Images",
+                        label="Click to use",
                         examples_per_page=6
                     )
-            
-            with gr.Row():
-                predict_btn = gr.Button(
-                    "🔍 Analyze Image", 
-                    variant="primary", 
-                    size="lg",
-                    scale=2
-                )
-                clear_btn = gr.ClearButton(
-                    components=[image_input], 
-                    value="Clear",
-                    size="lg",
-                    scale=1
-                )
-        
-        # Right Column - Results Section
-        with gr.Column(scale=1):
-            gr.Markdown("### Analysis Results")
-            
-            # Original and Grad-CAM side by side
-            with gr.Row():
-                original_output = gr.Image(label="Original Image", height=250)
-                gradcam_output = gr.Image(label="Grad-CAM Visualization", height=250)
-            
-            # Prediction results
-            with gr.Group(elem_classes="results-panel"):
-                gr.Markdown("#### Primary Classification")
-                prediction_output = gr.Textbox(
-                    label="Predicted Class",
-                    lines=1,
-                    show_label=False,
-                    elem_classes="prediction-box"
-                )
-                confidence_output = gr.Textbox(
-                    label="Confidence",
-                    lines=1,
-                    show_label=False,
-                    elem_classes="confidence-box"
-                )
+                    
+                    with gr.Row():
+                        predict_btn = gr.Button(
+                            "Analyze image", 
+                            variant="primary", 
+                            size="lg",
+                            scale=2
+                        )
+                        clear_btn = gr.ClearButton(
+                            components=[image_input], 
+                            value="Clear",
+                            size="lg",
+                            scale=1
+                        )
                 
-                gr.Markdown("#### Top 5 Predictions")
-                top5_output = gr.Label(
-                    label="Confidence Distribution",
-                    num_top_classes=5
-                )
-    
-    # Footer Information
-    with gr.Row():
-        gr.Markdown(
-            """
-            ---
-            
-            ### Model Information
-            
-            **Architecture:** ResNet50 (Deep Residual Network)  
-            **Training Dataset:** TinyImageNet  
-            **Number of Classes:** 200  
-            **Input Resolution:** 224×224 pixels  
-            
-            ### About Grad-CAM
-            
-            Gradient-weighted Class Activation Mapping (Grad-CAM) provides visual explanations for decisions from CNN-based models. 
-            The heatmap highlights regions that were most influential in the model's classification decision, with warmer colors 
-            (red/yellow) indicating higher importance and cooler colors (blue) indicating lower importance.
-            
-            ### Technical Details
-            
-            - **Framework:** PyTorch
-            - **Preprocessing:** ImageNet normalization (mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            - **Inference:** Real-time classification with CPU/GPU support
-            - **Visualization:** Grad-CAM applied to the final convolutional layer (layer4)
-            
-            ---
-            """,
-            elem_classes="footer-info"
-        )
+                # Right Column - Results Section
+                with gr.Column(scale=1):
+                    gr.Markdown("### Analysis results")
+                    
+                    # Original and Grad-CAM side by side
+                    with gr.Row():
+                        original_output = gr.Image(label="Original image", height=250)
+                        gradcam_output = gr.Image(label="Grad-CAM visualization", height=250)
+                    
+                    # Prediction results
+                    with gr.Group(elem_classes="results-panel"):
+                        gr.Markdown("**Primary classification**")
+                        prediction_output = gr.Textbox(
+                            label="Predicted class",
+                            lines=1,
+                            show_label=False,
+                            elem_classes="prediction-box"
+                        )
+                        confidence_output = gr.Textbox(
+                            label="Confidence",
+                            lines=1,
+                            show_label=False,
+                            elem_classes="confidence-box"
+                        )
+                        
+                        gr.Markdown("**Top 5 predictions**")
+                        top5_output = gr.Label(
+                            label="Confidence distribution",
+                            num_top_classes=5
+                        )
+        
+        # About Tab
+        with gr.Tab("About"):
+            gr.Markdown(
+                """
+                ## Model information
+                
+                This application uses a deep convolutional neural network for image classification. The model has been trained to recognize 200 different object categories from the TinyImageNet dataset.
+                
+                **Architecture:** ResNet50 (deep residual network)  
+                **Training dataset:** TinyImageNet  
+                **Number of classes:** 200  
+                **Input resolution:** 224×224 pixels  
+                **Framework:** PyTorch
+                
+                ---
+                
+                ## About Grad-CAM
+                
+                Gradient-weighted class activation mapping (Grad-CAM) is a visualization technique that provides visual explanations for decisions from convolutional neural network models. The heatmap highlights regions of the input image that were most influential in the model's classification decision.
+                
+                **Interpretation guide:**
+                - Warmer colors (red, yellow) indicate regions with higher importance
+                - Cooler colors (blue, purple) indicate regions with lower importance
+                - The visualization helps understand what features the model focuses on when making predictions
+                
+                ---
+                
+                ## Technical details
+                
+                **Preprocessing:**
+                - Images are resized to 256×256 pixels
+                - Center cropped to 224×224 pixels
+                - Normalized using ImageNet statistics (mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+                
+                **Inference:**
+                - Real-time classification with CPU/GPU support
+                - Softmax activation for probability distribution
+                - Top-5 predictions displayed with confidence scores
+                
+                **Grad-CAM implementation:**
+                - Applied to the final convolutional layer (layer4)
+                - Uses gradient information to weight feature maps
+                - Produces class-discriminative localization maps
+                - Overlaid on original image with 60/40 weighting
+                
+                **Model checkpoint:**
+                - Location: `/content/runs/tinyimagenet_resnet50/model_best.pth.tar`
+                - Fallback: Pretrained ImageNet weights if checkpoint unavailable
+                
+                ---
+                
+                ## Usage instructions
+                
+                1. Upload an image using the file picker or select from example images
+                2. Click the "Analyze image" button to run classification
+                3. View the original image alongside the Grad-CAM heatmap
+                4. Check the predicted class with confidence score
+                5. Review the top 5 predictions to see alternative classifications
+                
+                For best results, use clear images with the main subject centered and well-lit.
+                """
+            )
     
     # Event handlers
     predict_btn.click(
