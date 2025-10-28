@@ -9,6 +9,8 @@ import cv2
 import json
 import requests
 from io import BytesIO
+from grad_cam import GradCAM
+ 
 
 # ---------- Configuration ----------
 MODEL_NAME = "resnet50"
