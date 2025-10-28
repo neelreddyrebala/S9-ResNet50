@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import cv2
+import os
 
 from grad_cam import GradCAM
 
@@ -32,7 +33,7 @@ def denormalize_image(img_tensor):
     return np.uint8(img_np * 255)
 
 
-def create_comparison_grid(misclassified, class_names, gradcam, output_path='gradcam_comparison.png'):
+def create_comparison_grid(misclassified, class_names, gradcam, output_path='output/gradcam_comparison.png'):
     """Create a cleaner side-by-side comparison"""
     num_samples = len(misclassified)
     cols = min(5, num_samples)
@@ -138,6 +139,11 @@ def main(args):
 
     # Generate visualization
     print("Generating Grad-CAM visualizations...")
+        # Create output directory if it doesn't exist
+    output_dir = os.path.dirname(args.output_path)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        print(f"Created output directory: {output_dir}")
     create_comparison_grid(misclassified, class_names, gradcam, args.output_path)
 
 
@@ -151,7 +157,7 @@ if __name__ == "__main__":
                         help="Path to validation image folder")
     parser.add_argument("--num_show", type=int, default=20, 
                         help="Number of misclassified samples to visualize")
-    parser.add_argument("--output_path", type=str, default="gradcam_comparison.png",
+    parser.add_argument("--output_path", type=str, default="output/gradcam_comparison.png",
                         help="Output path for the visualization")
     args = parser.parse_args()
 
